@@ -2,36 +2,44 @@ import Card from '../UI/Card';
 import MealItem from './MealItem/MealItem';
 
 import classes from './AvailableMeals.module.css';
-
-const DUMMY_MEALS = [
-  {
-    id: 'm1',
-    name: 'Sushi',
-    description: 'Finest fish and veggies',
-    price: 22.99,
-  },
-  {
-    id: 'm2',
-    name: 'Schnitzel',
-    description: 'A german specialty!',
-    price: 16.5,
-  },
-  {
-    id: 'm3',
-    name: 'Barbecue Burger',
-    description: 'American, raw, meaty',
-    price: 12.99,
-  },
-  {
-    id: 'm4',
-    name: 'Green Bowl',
-    description: 'Healthy...and green...',
-    price: 18.99,
-  },
-];
+import { useEffect, useState } from 'react';
 
 const AvailableMeals = (props) => {
-  const mealsList = DUMMY_MEALS.map((meal) => {
+  const [meals, setMeals] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchMealsHandler = async () => {
+      try {
+        const response = await fetch('https://react-http-cee1e-default-rtdb.firebaseio.com/meals.json');
+
+        if (!response.ok) {
+          throw new Error('Something went wrong!');
+        }
+
+        const data = await response.json();
+
+        let fetchedMeals = [];
+
+        for (const key in data) {
+          fetchedMeals.push({
+            id: key,
+            name: data[key].name,
+            description: data[key].description,
+            price: data[key].price,
+          });
+        }
+
+        setMeals(fetchedMeals);
+      } catch (e) {
+        setError(e.message);
+      }
+    };
+
+    fetchMealsHandler();
+  }, []);
+
+  const mealsList = meals.map((meal) => {
     return (
       <MealItem id={meal.id} key={meal.id} name={meal.name} description={meal.description} price={meal.price}>
         {meal.name}
@@ -41,9 +49,7 @@ const AvailableMeals = (props) => {
 
   return (
     <section className={classes.meals}>
-      <Card>
-        <ul>{mealsList}</ul>
-      </Card>
+      <Card>{error ? <p>{error}</p> : <ul>{mealsList}</ul>}</Card>
     </section>
   );
 };
